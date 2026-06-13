@@ -22,3 +22,21 @@ export interface CombinedIdentity {
   total_playtime_hours: number
   library: GameEntry[]
 }
+
+export interface AchievementEntry {
+  api_name: string
+  name: string
+  description: string
+  achieved: boolean
+  unlock_time: number
+  icon: string
+  icon_gray: string
+}
+
+export interface GameAchievements {
+  has_achievements: boolean
+  achieved: number
+  total: number
+  achievements: AchievementEntry[]
+  message: string
+}

@@ -1,5 +1,6 @@
-import { type CombinedIdentity, type SteamProfile } from '../../types/steam'
 import { useState } from 'react'
+import type { CombinedIdentity, SteamProfile } from '../../types/steam'
+import AchievementsPanel from './AchievementsPanel'
 
 interface Props {
   identity: CombinedIdentity
@@ -12,8 +13,12 @@ function getGameIcon(appId: number, iconHash: string) {
   return `https://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${iconHash}.jpg`
 }
 
-export default function IdentityDashboard({ identity, accounts, onAddAccount }: Props) {  const [search, setSearch] = useState('')
+export default function IdentityDashboard({ identity, accounts, onAddAccount }: Props) {
+  const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all')
+  const [expandedAppId, setExpandedAppId] = useState<number | null>(null)
+
+  const steamIds = accounts.map(a => a.steam_id)
 
   const filtered = identity.library.filter(g => {
     const matchSearch = g.name.toLowerCase().includes(search.toLowerCase())
@@ -27,6 +32,10 @@ export default function IdentityDashboard({ identity, accounts, onAddAccount }: 
   const joinYear = accounts[0]?.time_created
     ? new Date(accounts[0].time_created * 1000).getFullYear()
     : null
+
+  const toggleExpand = (appId: number) => {
+    setExpandedAppId(prev => (prev === appId ? null : appId))
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-10">
@@ -45,7 +54,7 @@ export default function IdentityDashboard({ identity, accounts, onAddAccount }: 
           )}
         </div>
         <div className="flex items-center gap-4">
-          {accounts.map((a, i) => (
+          {accounts.map(a => (
             <div key={a.steam_id} className="flex items-center gap-2">
               <img src={a.avatar} alt={a.username} className="w-8 h-8 rounded-full" />
               <span className="text-xs text-muted font-mono hidden sm:block">{a.username}</span>
@@ -127,34 +136,56 @@ export default function IdentityDashboard({ identity, accounts, onAddAccount }: 
           </div>
         </div>
 
+        <p className="font-mono text-xs text-muted mb-3">
+          Click a game to view its achievements.
+        </p>
+
         <div className="space-y-1">
-          {filtered.map((game, i) => (
-            <div key={game.app_id}
-              className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-surface transition-colors group">
-              <span className="font-mono text-xs text-muted w-6 shrink-0 text-right">{i + 1}</span>
-              {getGameIcon(game.app_id, game.img_icon_url) ? (
-                <img
-                  src={getGameIcon(game.app_id, game.img_icon_url)!}
-                  alt={game.name}
-                  className="w-8 h-8 rounded shrink-0 object-cover"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded bg-surface2 shrink-0" />
-              )}
-              <span className="flex-1 text-sm text-body group-hover:text-white transition-colors truncate">
-                {game.name}
-              </span>
-              {game.owned_by_accounts.length > 1 && (
-                <span className="font-mono text-xs px-2 py-0.5 rounded shrink-0"
-                  style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
-                  {game.owned_by_accounts.length} accounts
-                </span>
-              )}
-              <span className={`font-mono text-xs w-16 text-right shrink-0 ${game.total_playtime_hours > 0 ? 'text-white' : 'text-muted'}`}>
-                {game.total_playtime_hours > 0 ? `${game.total_playtime_hours}h` : '—'}
-              </span>
-            </div>
-          ))}
+          {filtered.map((game, i) => {
+            const isExpanded = expandedAppId === game.app_id
+            return (
+              <div key={game.app_id}>
+                <div
+                  onClick={() => toggleExpand(game.app_id)}
+                  data-hover
+                  className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-colors group ${isExpanded ? 'bg-surface' : 'hover:bg-surface'}`}
+                >
+                  <span className="font-mono text-xs text-muted w-6 shrink-0 text-right">{i + 1}</span>
+                  {getGameIcon(game.app_id, game.img_icon_url) ? (
+                    <img
+                      src={getGameIcon(game.app_id, game.img_icon_url)!}
+                      alt={game.name}
+                      className="w-8 h-8 rounded shrink-0 object-cover"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded bg-surface2 shrink-0" />
+                  )}
+                  <span className="flex-1 text-sm text-body group-hover:text-white transition-colors truncate">
+                    {game.name}
+                  </span>
+                  {game.owned_by_accounts.length > 1 && (
+                    <span className="font-mono text-xs px-2 py-0.5 rounded shrink-0"
+                      style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C' }}>
+                      {game.owned_by_accounts.length} accounts
+                    </span>
+                  )}
+                  <span className={`font-mono text-xs w-16 text-right shrink-0 ${game.total_playtime_hours > 0 ? 'text-white' : 'text-muted'}`}>
+                    {game.total_playtime_hours > 0 ? `${game.total_playtime_hours}h` : '—'}
+                  </span>
+                  <span
+                    className="font-mono text-xs text-muted w-3 text-center shrink-0 transition-transform"
+                    style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
+                  >
+                    ›
+                  </span>
+                </div>
+
+                {isExpanded && (
+                  <AchievementsPanel steamIds={steamIds} appId={game.app_id} />
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {filtered.length === 0 && (

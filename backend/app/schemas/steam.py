@@ -32,3 +32,20 @@ class CombinedIdentity(BaseModel):
     unique_games: int
     total_playtime_hours: float
     library: list[GameEntry]
+
+class AchievementEntry(BaseModel):
+    api_name: str
+    name: str
+    description: str
+    achieved: bool
+    unlock_time: int
+    icon: str
+    icon_gray: str
+
+
+class GameAchievements(BaseModel):
+    has_achievements: bool
+    achieved: int
+    total: int
+    achievements: list[AchievementEntry]
+    message: str = ""

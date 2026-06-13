@@ -7,12 +7,16 @@ from app.schemas.steam import (
     PlayerSummary,
     CombinedIdentity,
     GameEntry,
+    GameAchievements,
 )
 from app.services.steam_service import (
     get_player_summary,
     get_owned_games,
     merge_game_libraries,
+    get_game_achievements,
+    merge_achievements,
 )
+
 from app.core.config import settings
 
 router = APIRouter(prefix="/steam", tags=["Steam"])
@@ -114,3 +118,19 @@ async def combine_accounts(body: MultiAccountInput):
         total_playtime_hours=total_hours,
         library=library,
     )
+
+@router.get("/achievements/{steam_id}/{app_id}", response_model=GameAchievements)
+async def fetch_achievements(steam_id: str, app_id: int):
+    """Fetch achievement progress for a single account + game."""
+    data = await get_game_achievements(steam_id, app_id)
+    return data
+
+
+@router.post("/achievements/combined/{app_id}", response_model=GameAchievements)
+async def fetch_combined_achievements(app_id: int, body: MultiAccountInput):
+    """Fetch merged achievement progress across multiple accounts for one game."""
+    if not body.steam_ids:
+        raise HTTPException(status_code=400, detail="No Steam IDs provided.")
+
+    results = [await get_game_achievements(sid, app_id) for sid in body.steam_ids]
+    return merge_achievements(results)
