@@ -1,0 +1,53 @@
+﻿# ── Python ──────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual environment
+backend/venv/
+backend/.venv/
+venv/
+.venv/
+
+# Environment variables — NEVER commit these
+.env
+.env.local
+.env.production
+.env.development
+backend/.env
+frontend/.env
+frontend/.env.local
+
+# ── Secrets & keys ──────────────────────────────────────
+*.key
+*.pem
+secrets/
+
+# ── Frontend ─────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+*.tsbuildinfo
+
+# ── OS ───────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── VSCode ───────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+
+# ── Data & cache ─────────────────────────────────────────
+*.sqlite
+*.db
+*.log
+cache/
+.cache/
