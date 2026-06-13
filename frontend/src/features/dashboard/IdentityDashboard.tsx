@@ -4,7 +4,7 @@ import { useState } from 'react'
 interface Props {
   identity: CombinedIdentity
   accounts: SteamProfile[]
-  onReset: () => void
+  onAddAccount: () => void
 }
 
 function getGameIcon(appId: number, iconHash: string) {
@@ -12,8 +12,7 @@ function getGameIcon(appId: number, iconHash: string) {
   return `https://media.steampowered.com/steamcommunity/public/images/apps/${appId}/${iconHash}.jpg`
 }
 
-export default function IdentityDashboard({ identity, accounts, onReset }: Props) {
-  const [search, setSearch] = useState('')
+export default function IdentityDashboard({ identity, accounts, onAddAccount }: Props) {  const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | 'played' | 'unplayed'>('all')
 
   const filtered = identity.library.filter(g => {
@@ -52,7 +51,7 @@ export default function IdentityDashboard({ identity, accounts, onReset }: Props
               <span className="text-xs text-muted font-mono hidden sm:block">{a.username}</span>
             </div>
           ))}
-          <button onClick={onReset}
+          <button onClick={onAddAccount}
             className="font-mono text-xs text-muted border border-border px-3 py-2 rounded-md hover:border-muted hover:text-white transition-all">
             + Add account
           </button>

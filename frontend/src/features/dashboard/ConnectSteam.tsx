@@ -1,28 +1,28 @@
 import { useState } from 'react'
 import { useSteam } from '../../hooks/useSteam'
-import { type SteamProfile } from '../../types/steam'
+import type { SteamProfile } from '../../types/steam'
 
 interface ConnectSteamProps {
   onConfirm: (accounts: SteamProfile[]) => void
+  initialAccounts?: SteamProfile[]
+  onCancel?: () => void
 }
 
-export default function ConnectSteam({ onConfirm }: ConnectSteamProps) {
+export default function ConnectSteam({ onConfirm, initialAccounts = [], onCancel }: ConnectSteamProps) {
   const [input, setInput] = useState('')
-  const [previews, setPreviews] = useState<SteamProfile[]>([])
+  const [previews, setPreviews] = useState<SteamProfile[]>(initialAccounts)
   const { loading, error, fetchProfile, resolveVanity } = useSteam()
 
   const handleAdd = async () => {
     if (!input.trim()) return
     let steamId = input.trim()
 
-    // If not a 17-digit number, try vanity resolve
     if (!/^\d{17}$/.test(steamId)) {
       const resolved = await resolveVanity(steamId)
       if (!resolved) return
       steamId = resolved
     }
 
-    // Don't add duplicates
     if (previews.find(p => p.steam_id === steamId)) {
       setInput('')
       return
@@ -39,14 +39,25 @@ export default function ConnectSteam({ onConfirm }: ConnectSteamProps) {
     setPreviews(prev => prev.filter(p => p.steam_id !== steamId))
   }
 
+  const isAdding = initialAccounts.length > 0
+
   return (
     <div className="max-w-xl mx-auto px-6 py-24">
+      {onCancel && (
+        <button onClick={onCancel}
+          className="font-mono text-xs text-muted hover:text-white transition-colors mb-6">
+          ← Back to dashboard
+        </button>
+      )}
+
       <p className="font-mono text-xs tracking-widest text-gold uppercase mb-4">Phase 1</p>
       <h1 className="font-sans text-4xl font-bold tracking-tight mb-3">
-        Connect your<br />Steam accounts
+        {isAdding ? <>Add another<br />account</> : <>Connect your<br />Steam accounts</>}
       </h1>
       <p className="text-body text-sm leading-relaxed mb-10">
-        Enter your Steam ID or vanity URL name. Add multiple accounts to merge them into one identity.
+        {isAdding
+          ? 'Add another Steam account to merge into your existing identity.'
+          : 'Enter your Steam ID or vanity URL name. Add multiple accounts to merge them into one identity.'}
       </p>
 
       {/* Input */}
@@ -110,7 +121,7 @@ export default function ConnectSteam({ onConfirm }: ConnectSteamProps) {
           onClick={() => onConfirm(previews)}
           className="w-full py-3 bg-gold text-canvas font-sans font-semibold text-sm rounded-md hover:opacity-90 transition-opacity"
         >
-          Build my identity →
+          {isAdding ? 'Update my identity →' : 'Build my identity →'}
         </button>
       )}
     </div>
