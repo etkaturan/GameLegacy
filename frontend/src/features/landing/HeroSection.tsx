@@ -87,7 +87,7 @@ export default function HeroSection() {
             into a single permanent identity. Every hour. Every rank. Every collection.
           </p>
           <div className="flex gap-4">
-            <Button variant="primary">Claim your identity</Button>
+            <a href="/dashboard"><Button variant="primary">Claim your identity</Button></a>
             <a href="#features">
             <Button variant="ghost">See how it works</Button>
             </a>
