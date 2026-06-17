@@ -16,23 +16,25 @@ export default function Cursor() {
       ring.style.top = e.clientY + 'px'
     }
 
-    const onEnter = () => ring.classList.add('hovering')
-    const onLeave = () => ring.classList.remove('hovering')
+    const isInteractive = (target: EventTarget | null) =>
+      target instanceof HTMLElement && target.closest('a, button, input, [data-hover]')
+
+    const onOver = (e: MouseEvent) => {
+      if (isInteractive(e.target)) ring.classList.add('hovering')
+    }
+
+    const onOut = (e: MouseEvent) => {
+      if (isInteractive(e.target)) ring.classList.remove('hovering')
+    }
 
     window.addEventListener('mousemove', onMove)
-
-    const interactives = document.querySelectorAll('a, button, input, [data-hover]')
-    interactives.forEach(el => {
-      el.addEventListener('mouseenter', onEnter)
-      el.addEventListener('mouseleave', onLeave)
-    })
+    document.addEventListener('mouseover', onOver)
+    document.addEventListener('mouseout', onOut)
 
     return () => {
       window.removeEventListener('mousemove', onMove)
-      interactives.forEach(el => {
-        el.removeEventListener('mouseenter', onEnter)
-        el.removeEventListener('mouseleave', onLeave)
-      })
+      document.removeEventListener('mouseover', onOver)
+      document.removeEventListener('mouseout', onOut)
     }
   }, [])
 

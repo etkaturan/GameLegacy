@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import engine, Base
 from app.models import identity as identity_model  # noqa: F401 — register model with Base
-from app.api.v1 import steam, identity
+from app.api.v1 import steam, identity, inventory
 
 app = FastAPI(
     title="GameLegacy API",
@@ -25,6 +25,7 @@ Base.metadata.create_all(bind=engine)
 # Routers
 app.include_router(steam.router, prefix="/api/v1")
 app.include_router(identity.router, prefix="/api/v1")
+app.include_router(inventory.router, prefix="/api/v1")
 
 
 @app.get("/")

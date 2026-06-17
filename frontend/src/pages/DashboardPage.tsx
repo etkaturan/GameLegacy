@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Outlet } from 'react-router-dom'
 import { useSteam } from '../hooks/useSteam'
 import {
   getStoredIdentityId,
@@ -8,9 +9,18 @@ import {
   saveIdentity,
 } from '../hooks/useIdentity'
 import ConnectSteam from '../features/dashboard/ConnectSteam'
-import IdentityDashboard from '../features/dashboard/IdentityDashboard'
 import LoadingScreen from '../components/ui/LoadingScreen'
+import DashboardNav from '../components/ui/DashboardNav'
+import ProfileHeader from '../features/dashboard/ProfileHeader'
 import type { SteamProfile, CombinedIdentity } from '../types/steam'
+import type { IdentityRecord } from '../types/identity'
+
+export interface DashboardContextType {
+  identity: CombinedIdentity
+  accounts: SteamProfile[]
+  record: IdentityRecord
+  setRecord: (r: IdentityRecord) => void
+}
 
 type Mode = 'loading' | 'connect' | 'dashboard'
 
@@ -18,10 +28,9 @@ export default function DashboardPage() {
   const [mode, setMode] = useState<Mode>('loading')
   const [accounts, setAccounts] = useState<SteamProfile[]>([])
   const [identity, setIdentity] = useState<CombinedIdentity | null>(null)
-  const [identityId, setIdentityId] = useState<string | null>(null)
+  const [record, setRecord] = useState<IdentityRecord | null>(null)
   const { loading, error, combineAccounts } = useSteam()
 
-  // On first load, try to restore a saved identity
   useEffect(() => {
     const init = async () => {
       const storedId = getStoredIdentityId()
@@ -31,8 +40,8 @@ export default function DashboardPage() {
       }
 
       try {
-        const saved = await fetchIdentity(storedId)
-        const steamIds: string[] = saved.accounts.map((a: any) => a.platform_id)
+        const rec = await fetchIdentity(storedId)
+        const steamIds = rec.accounts.map(a => a.platform_id)
 
         if (steamIds.length === 0) {
           clearIdentityId()
@@ -44,7 +53,7 @@ export default function DashboardPage() {
         if (result) {
           setAccounts(result.accounts)
           setIdentity(result)
-          setIdentityId(storedId)
+          setRecord(rec)
           setMode('dashboard')
         } else {
           setMode('connect')
@@ -66,9 +75,9 @@ export default function DashboardPage() {
       setAccounts(result.accounts)
       setIdentity(result)
 
-      const saved = await saveIdentity(ids, identityId)
-      setIdentityId(saved.id)
+      const saved = await saveIdentity(ids, record?.id ?? null)
       storeIdentityId(saved.id)
+      setRecord(saved)
 
       setMode('dashboard')
     }
@@ -99,8 +108,15 @@ export default function DashboardPage() {
     )
   }
 
-  if (mode === 'dashboard' && identity) {
-    return <IdentityDashboard identity={identity} accounts={accounts} onAddAccount={handleAddAccount} />
+  if (mode === 'dashboard' && identity && record) {
+    const context: DashboardContextType = { identity, accounts, record, setRecord }
+    return (
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        <ProfileHeader identity={identity} accounts={accounts} record={record} onAddAccount={handleAddAccount} />
+        <DashboardNav />
+        <Outlet context={context} />
+      </div>
+    )
   }
 
   return (

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 import httpx
+from datetime import datetime
 
 from app.schemas.steam import (
     SteamAccountInput,
@@ -16,7 +17,10 @@ from app.services.steam_service import (
     get_game_achievements,
     merge_achievements,
 )
-
+from app.services.progression_service import (
+    calculate_progression,
+    calculate_gamelegacy_achievements,
+)
 from app.core.config import settings
 
 router = APIRouter(prefix="/steam", tags=["Steam"])
@@ -60,14 +64,14 @@ async def resolve_vanity(body: SteamAccountInput):
 async def combine_accounts(body: MultiAccountInput):
     """
     Combine multiple Steam accounts into one unified gaming identity.
-    Accepts a list of Steam IDs and returns merged library + stats.
+    Accepts a list of Steam IDs and returns merged library, stats,
+    progression (level/title), and GameLegacy exclusive achievements.
     """
     if not body.steam_ids:
         raise HTTPException(status_code=400, detail="No Steam IDs provided.")
     if len(body.steam_ids) > 6:
         raise HTTPException(status_code=400, detail="Maximum 6 accounts supported.")
 
-    # Fetch all profiles and libraries in parallel
     profiles = []
     libraries = []
 
@@ -94,7 +98,6 @@ async def combine_accounts(body: MultiAccountInput):
     # Merge libraries
     merged = merge_game_libraries(libraries)
 
-    # Build response
     total_minutes = sum(g["total_playtime_minutes"] for g in merged)
     total_hours = round(total_minutes / 60, 1)
     total_games = sum(len(lib) for lib in libraries)
@@ -111,13 +114,32 @@ async def combine_accounts(body: MultiAccountInput):
         for g in merged
     ]
 
+    # Progression — level, title, progress to next level
+    progression = calculate_progression(total_hours)
+
+    # GameLegacy exclusive achievements
+    creation_years = [
+            datetime.utcfromtimestamp(p.time_created).year
+            for p in profiles if p.time_created
+        ]
+    earliest_year = min(creation_years) if creation_years else None
+
+    gamelegacy_achievements = calculate_gamelegacy_achievements(
+        total_games=total_games,
+        total_hours=total_hours,
+        earliest_account_year=earliest_year,
+    )
+
     return CombinedIdentity(
         accounts=profiles,
         total_games=total_games,
         unique_games=len(merged),
         total_playtime_hours=total_hours,
         library=library,
+        progression=progression,
+        gamelegacy_achievements=gamelegacy_achievements,
     )
+
 
 @router.get("/achievements/{steam_id}/{app_id}", response_model=GameAchievements)
 async def fetch_achievements(steam_id: str, app_id: int):
@@ -134,3 +156,4 @@ async def fetch_combined_achievements(app_id: int, body: MultiAccountInput):
 
     results = [await get_game_achievements(sid, app_id) for sid in body.steam_ids]
     return merge_achievements(results)
+

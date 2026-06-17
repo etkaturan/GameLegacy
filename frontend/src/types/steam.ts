@@ -15,12 +15,33 @@ export interface GameEntry {
   img_icon_url: string
 }
 
+export interface Progression {
+  level: number
+  title: string
+  current_hours: number
+  hours_for_current_level: number
+  hours_for_next_level: number
+  progress_percent: number
+}
+
+export interface GameLegacyAchievement {
+  id: string
+  name: string
+  description: string
+  achieved: boolean
+  progress_current: number
+  progress_target: number
+  progress_percent: number
+}
+
 export interface CombinedIdentity {
   accounts: SteamProfile[]
   total_games: number
   unique_games: number
   total_playtime_hours: number
   library: GameEntry[]
+  progression: Progression
+  gamelegacy_achievements: GameLegacyAchievement[]
 }
 
 export interface AchievementEntry {

@@ -26,12 +26,34 @@ class PlayerSummary(BaseModel):
     time_created: int | None = None
 
 
+class ProgressionOut(BaseModel):
+    level: int
+    title: str
+    current_hours: float
+    hours_for_current_level: float
+    hours_for_next_level: float
+    progress_percent: float
+
+
+class GameLegacyAchievementOut(BaseModel):
+    id: str
+    name: str
+    description: str
+    achieved: bool
+    progress_current: float
+    progress_target: float
+    progress_percent: float
+
+
 class CombinedIdentity(BaseModel):
     accounts: list[PlayerSummary]
     total_games: int
     unique_games: int
     total_playtime_hours: float
     library: list[GameEntry]
+    progression: ProgressionOut
+    gamelegacy_achievements: list[GameLegacyAchievementOut]
+
 
 class AchievementEntry(BaseModel):
     api_name: str
